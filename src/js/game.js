@@ -10,6 +10,7 @@ class Game {
         this.init();
         this.bindEvents();
         this.raceFinished = false; // Yeni: yarış bitişini kontrol etmek için
+        this.setupRaceFinishListener();
     }
 
     bindEvents() {
@@ -203,56 +204,62 @@ class Game {
 
     setupControls() {
         const handleKeyDown = (e) => {
-            if (e.code === 'Space') {
+            if (e.code === 'ArrowRight' || e.code === 'Space') {
+                e.preventDefault();
                 this.playerCar.setAccelerating(true);
             } else if (e.code === 'ShiftLeft') {
+                e.preventDefault();
                 this.playerCar.activateBoost(true);
             }
         };
 
         const handleKeyUp = (e) => {
-            if (e.code === 'Space') {
+            if (e.code === 'ArrowRight' || e.code === 'Space') {
+                e.preventDefault();
                 this.playerCar.setAccelerating(false);
             } else if (e.code === 'ShiftLeft') {
+                e.preventDefault();
                 this.playerCar.activateBoost(false);
             }
         };
 
+        // Remove any existing listeners
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+
+        // Add new listeners
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
 
-        // Mobil kontroller için dokunmatik olay dinleyicileri
+        // Mobile controls
         const accelerateBtn = document.getElementById('accelerateBtn');
         const turboBtn = document.getElementById('turboBtn');
 
         if (accelerateBtn && turboBtn) {
-            accelerateBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.playerCar.setAccelerating(true);
-            });
+            const touchHandlers = {
+                accelerateStart: (e) => {
+                    e.preventDefault();
+                    this.playerCar.setAccelerating(true);
+                },
+                accelerateEnd: (e) => {
+                    e.preventDefault();
+                    this.playerCar.setAccelerating(false);
+                },
+                turboStart: (e) => {
+                    e.preventDefault();
+                    this.playerCar.activateBoost(true);
+                },
+                turboEnd: (e) => {
+                    e.preventDefault();
+                    this.playerCar.activateBoost(false);
+                }
+            };
 
-            accelerateBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.playerCar.setAccelerating(false);
-            });
-
-            turboBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.playerCar.activateBoost(true);
-            });
-
-            turboBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.playerCar.activateBoost(false);
-            });
+            accelerateBtn.addEventListener('touchstart', touchHandlers.accelerateStart);
+            accelerateBtn.addEventListener('touchend', touchHandlers.accelerateEnd);
+            turboBtn.addEventListener('touchstart', touchHandlers.turboStart);
+            turboBtn.addEventListener('touchend', touchHandlers.turboEnd);
         }
-
-        // Yarış bitince event listener'ları temizle
-        window.addEventListener('raceComplete', () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-            this.endRace();
-        });
     }
 
     startRaceTimer() {
@@ -299,33 +306,41 @@ class Game {
         this.playerCar?.stopRace();
         this.computerCar?.stopRace();
         
-        const playerDistance = this.playerCar.position;
-        const computerDistance = this.computerCar.position;
-        const finishLine = document.getElementById('finish-line').getBoundingClientRect().left;
+        const playerDistance = this.playerCar.getDistance();
+        const computerDistance = this.computerCar.getDistance();
+        
+        this.showRaceResults(playerDistance >= computerDistance);
+    }
 
+    setupRaceFinishListener() {
+        window.addEventListener('raceFinished', (event) => {
+            const { winner, position, car } = event.detail;
+            this.showRaceResults(winner === 'player');
+        });
+    }
+
+    showRaceResults(isPlayerWinner) {
+        // Ensure race display is hidden
+        document.getElementById('race-display').style.display = 'none';
+        
+        // Show results screen
         const resultsScreen = document.getElementById('race-results');
-        const resultTitleElement = resultsScreen.querySelector('.result-title');
-
-        let resultMessage = '';
-        if (playerDistance >= computerDistance) {
-            resultMessage = `🏆 YOU WIN! 🏆<br><small>You beat ${this.computerCar.name}!</small>`;
+        const resultTitle = resultsScreen.querySelector('.result-title');
+        
+        if (isPlayerWinner) {
+            resultTitle.innerHTML = `🏆 YOU WIN! 🏆<br><small>You beat ${this.computerCar.name}!</small>`;
             playSound('raceFinish');
         } else {
-            resultMessage = `😢 YOU LOSE! 😢<br><small>${this.computerCar.name} was faster!</small>`;
+            resultTitle.innerHTML = `😢 YOU LOSE! 😢<br><small>${this.computerCar.name} was faster!</small>`;
             playSound('carCrash');
         }
-
-        resultTitleElement.innerHTML = resultMessage;
-        resultTitleElement.style.fontSize = '32px';
-        resultTitleElement.style.marginBottom = '20px';
+        
+        // Show results screen
         resultsScreen.style.display = 'block';
-
-        // Play Again ve Menu butonlarını aktifleştir
-        const playAgainBtn = document.getElementById('play-again');
-        const menuBtn = document.getElementById('back-to-menu');
-
-        playAgainBtn.onclick = () => this.restartRace();
-        menuBtn.onclick = () => this.backToMenu();
+        
+        // Setup buttons
+        document.getElementById('play-again').onclick = () => this.restartRace();
+        document.getElementById('back-to-menu').onclick = () => this.backToMenu();
     }
 
     async restartRace() {

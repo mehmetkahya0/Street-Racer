@@ -8,6 +8,8 @@ export class Car {
         this.position = 0;
         this.maxSpeed = stats.speed || 5;
         this.acceleration = stats.acceleration || 0.2;
+        this.deceleration = 0.1; // New: deceleration rate
+        this.boostMultiplier = 1.5; // New: boost speed multiplier
         this.boost = 100;
         this.isBoostActive = false;
         this.isRacing = false;
@@ -42,52 +44,67 @@ export class Car {
     animate = (timestamp) => {
         if (!this.isRacing) return;
 
-        // Delta time hesaplama
         if (!this.lastTimestamp) this.lastTimestamp = timestamp;
-        const deltaTime = (timestamp - this.lastTimestamp) / 16.67; // 60 FPS'e normalize et
+        const deltaTime = (timestamp - this.lastTimestamp) / 16.67;
         this.lastTimestamp = timestamp;
 
+        // Improved speed calculations
         if (this.type === 'player') {
-            // Daha yumuşak hızlanma ve yavaşlama
-            const targetSpeed = this.isAccelerating ? 
-                (this.isBoostActive ? this.maxSpeed * 1.5 : this.maxSpeed) : 0;
-
-            // Hız değişimini yumuşat
-            const speedDiff = targetSpeed - this.currentSpeed;
-            this.currentSpeed += speedDiff * (this.isAccelerating ? 0.05 : 0.1) * deltaTime;
-
-            // Boost yönetimi
-            if (this.isBoostActive && this.boost > 0) {
-                this.boost = Math.max(0, this.boost - deltaTime * 0.5);
+            let targetSpeed = 0;
+            
+            if (this.isAccelerating) {
+                targetSpeed = this.maxSpeed;
+                if (this.isBoostActive && this.boost > 0) {
+                    targetSpeed *= this.boostMultiplier;
+                    this.boost = Math.max(0, this.boost - deltaTime);
+                }
             }
+
+            // Smoother acceleration/deceleration
+            const speedChange = this.isAccelerating ? 
+                this.acceleration * deltaTime : 
+                -this.deceleration * deltaTime;
+            
+            this.currentSpeed = Math.max(0, Math.min(
+                this.currentSpeed + speedChange,
+                targetSpeed
+            ));
         } else {
-            // Bilgisayar arabası için daha yumuşak hızlanma
-            this.currentSpeed += (this.maxSpeed - this.currentSpeed) * 0.02 * deltaTime;
+            // Improved AI car behavior
+            const targetSpeed = this.maxSpeed * 0.9; // AI cars run at 90% speed
+            this.currentSpeed = Math.min(
+                this.currentSpeed + (this.acceleration * 0.5 * deltaTime),
+                targetSpeed
+            );
         }
 
-        // Pozisyonu güncelle
+        // Update position
         this.position += this.currentSpeed * deltaTime;
         this.element.style.left = `${this.position}px`;
 
-        // UI güncellemeleri
+        // Update UI
         if (this.type === 'player') {
-            // Hızı KM/H'ye çevir (yaklaşık değer)
-            const speedKMH = Math.floor(this.currentSpeed * 15);
+            const speedKMH = Math.floor(this.currentSpeed * 30); // Better speed conversion
             document.getElementById('current-speed').textContent = speedKMH;
             document.getElementById('boost-bar').style.transform = 
                 `scaleX(${this.boost / 100})`;
         }
 
-        // Yarış bitişini kontrol et
+        // Check race completion - Updated logic
         const finishLine = document.getElementById('finish-line').getBoundingClientRect().left;
-        if (this.position < finishLine - 100) {
+        if (this.position < finishLine - 50) {
             requestAnimationFrame(this.animate);
         } else {
             this.isRacing = false;
-            // Yarış bittiğinde event tetikle
-            window.dispatchEvent(new CustomEvent('raceComplete', { 
-                detail: { winner: this.type, position: this.position }
-            }));
+            this.stopRace();
+            const event = new CustomEvent('raceFinished', { 
+                detail: { 
+                    winner: this.type, 
+                    position: this.position,
+                    car: this
+                }
+            });
+            window.dispatchEvent(event);
         }
     }
 
