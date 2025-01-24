@@ -7,10 +7,14 @@
     "start": "live-server src",
     "test": "jest"
   },
-  "dependencies": {
-    "jest": "^27.0.0"
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
   },
-  "devDependencies": {},
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": []
 }

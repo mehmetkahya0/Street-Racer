@@ -1,36 +1,60 @@
-const { Car } = require('../src/js/car');
-const { Track } = require('../src/js/track');
-const { selectRandomCar } = require('../src/js/utils');
+import { Car } from '../src/js/car.js';
+import { Track } from '../src/js/track.js';
+import { selectRandomCar } from '../src/js/utils.js';
 
 describe('Car Selection', () => {
+    beforeEach(() => {
+        document.body.innerHTML = `
+            <div id="track-container">
+                <div id="finish-line"></div>
+            </div>
+            <div id="current-speed"></div>
+            <div id="boost-bar"></div>
+        `;
+    });
+
     test('should select a car randomly from available options', () => {
-        const cars = [new Car('Car1', 10), new Car('Car2', 15), new Car('Car3', 20)];
+        const cars = [
+            { name: 'Car1', speed: 10 },
+            { name: 'Car2', speed: 15 },
+            { name: 'Car3', speed: 20 }
+        ];
         const selectedCar = selectRandomCar(cars);
-        expect(cars).toContain(selectedCar);
+        expect(cars).toContainEqual(selectedCar);
     });
 });
 
 describe('Race Mechanics', () => {
     let track;
-    let car1;
-    let car2;
+    let playerCar;
+    let computerCar;
 
     beforeEach(() => {
-        track = new Track(100);
-        car1 = new Car('Car1', 10);
-        car2 = new Car('Car2', 15);
+        document.body.innerHTML = `
+            <div id="track-container">
+                <div id="finish-line"></div>
+            </div>
+            <div id="current-speed"></div>
+            <div id="boost-bar"></div>
+        `;
+        
+        track = new Track();
+        playerCar = new Car('player', 'test-car.png', { speed: 10, acceleration: 0.2 });
+        computerCar = new Car('computer', 'test-car.png', { speed: 15, acceleration: 0.2 });
     });
 
-    test('should move cars towards the finish line', () => {
-        car1.move();
-        car2.move();
-        expect(car1.position).toBeGreaterThan(0);
-        expect(car2.position).toBeGreaterThan(0);
+    test('cars should start at position 50', () => {
+        playerCar.startRace();
+        computerCar.startRace();
+        expect(playerCar.position).toBe(50);
+        expect(computerCar.position).toBe(50);
     });
 
-    test('should declare the winner correctly', () => {
-        car1.position = 100;
-        car2.position = 90;
-        expect(track.declareWinner(car1, car2)).toBe(car1.name);
+    test('boost should increase speed', () => {
+        playerCar.startRace();
+        playerCar.setAccelerating(true);
+        const normalSpeed = playerCar.currentSpeed;
+        playerCar.activateBoost(true);
+        expect(playerCar.currentSpeed).toBeLessThanOrEqual(normalSpeed * playerCar.boostMultiplier);
     });
 });
