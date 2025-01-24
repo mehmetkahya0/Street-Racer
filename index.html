@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Street Racer">
+    <title>STREET RACER</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <p>LOADING GAME</p>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-wrapper">
+        <!-- Car Selection Screen -->
+        <div id="car-selection" class="game-screen active">
+            <div class="game-title">
+                <h1>STREET RACER</h1>
+                <span class="subtitle">SELECT YOUR VEHICLE</span>
+            </div>
+
+            <div class="car-selection-container">
+                <div class="car-selection-grid">
+                    <!-- Cars will be inserted here by JavaScript -->
+                </div>
+
+                <div class="car-stats">
+                    <div class="stat-bar">
+                        <span>TOP SPEED</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-value" id="speed-stat"></div>
+                            <span class="stat-number" id="speed-value">0 km/h</span>
+                        </div>
+                    </div>
+                    <div class="stat-bar">
+                        <span>ACCELERATION (0-100)</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-value" id="accel-stat"></div>
+                            <span class="stat-number" id="accel-value">0s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button id="start-race" class="neon-button" disabled>START RACE</button>
+            </div>
+        </div>
+
+        <!-- Race Screen -->
+        <div id="race-display" class="game-screen">
+            <div class="race-stats">
+                <div class="speed-meter">
+                    <span id="current-speed">0</span>
+                    <span class="unit">KM/H</span>
+                </div>
+                <div class="boost-meter">
+                    <div id="boost-bar"></div>
+                </div>
+            </div>
+
+            <div id="track-container">
+                <div id="track"></div>
+                <div id="finish-line"></div>
+            </div>
+            <div class="mobile-controls">
+                <button class="control-button" id="accelerateBtn">SPEED</button>
+                <button class="control-button" id="turboBtn">TURBO</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="race-results" class="game-screen">
+            <h2 class="result-title"></h2>
+            <div class="result-stats"></div>
+            <div class="button-group">
+                <button id="play-again" class="neon-button">RACE AGAIN</button>
+                <button id="back-to-menu" class="neon-button outline">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Info -->
+    <div class="controls-hint">
+        <span>SPACE - NITRO</span>
+        <span>SHIFT - BOOST</span>
+        <span>ESC - PAUSE</span>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Show game container after loading
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.game-wrapper').style.display = 'flex';
+        });
+    </script>
+    <script type="module" src="src/js/utils.js"></script>
+    <script type="module" src="src/js/car.js"></script>
+    <script type="module" src="src/js/track.js"></script>
+    <script type="module" src="src/js/game.js"></script>
+</body>
+</html>
